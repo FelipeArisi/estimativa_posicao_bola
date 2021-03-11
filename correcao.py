@@ -7,11 +7,11 @@ K=np.array([[809.155038, 0.0, 960.0], [0.0, 494.790948, 540.0], [0.0, 0.0, 1.0]]
 #D=np.array([[1.0000000000000000e+00],[-1.0927006057935250e-07],[-1.2372445556263467e-13],[0]])
 D=np.array([1.0000000000000000e-01, -1.0927006057935250e-07, -1.2372445556263467e-13, 0])
 
-with open('np_files/result_pixel_22_08_2.npy', 'rb') as f:
+with open('processing/np/result_pixel_22_08_2.npy', 'rb') as f:
     test = np.load(f)
     pred = np.load(f)
 
-img_path = 'img/00050.png'
+img_path = 'in/img/00050.png'
 img = cv2.imread(img_path)
 h,w = img.shape[:2]
 
@@ -46,6 +46,6 @@ for x,y in aux[0]:
 pred = (cv2.fisheye.undistortPoints( np.array([pred]), K, D, P=newK))/2
 test = (cv2.fisheye.undistortPoints( np.array([test]), K, D, P=newK))/2
 
-with open('np_files/result_pixel_correcao_22_08_2.npy', 'wb') as f:
+with open('processing/np/result_pixel_correcao_22_08_2.npy', 'wb') as f:
     np.save(f, test)
     np.save(f, pred)

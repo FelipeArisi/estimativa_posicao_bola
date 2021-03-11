@@ -30,7 +30,7 @@ def ball(mean, accums):
          i = i+1
     return -1         
 
-pasta = 'img_recortadas/'
+pasta = 'processing/img_recortadas/'
 
 arqs = os.listdir(pasta)
 
@@ -96,5 +96,5 @@ for nome in arqs:
             i = i+1
             if(im[circy, circx, :].mean() > 160 and im[circy, circx, :].mean() < 180 and ac > 0.55 ):
                 image[circy, circx] = 255
-                io.imsave('img_ball/'+nome, (image).astype('uint8'))   
+                io.imsave('processing/img_ball/'+nome, (image).astype('uint8'))   
                 

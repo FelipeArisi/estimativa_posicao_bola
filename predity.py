@@ -19,14 +19,14 @@ from matplotlib import pyplot
 
 from utils.utils import criar_dados, print_error, metrica, shuffle, find_the_ball
 
-data = pd.read_csv("csv_files/data_tcc_22_08.csv")
+data = pd.read_csv("in/csv/data_tcc_22_08.csv")
 _PARAMETER = 100
 
 
 #%%
 
 def convert_to_np(data):
-    label_pes = pd.read_csv("csv_files/label_pes.csv")
+    label_pes = pd.read_csv("in/csv/label_pes.csv")
     label_pes = list(label_pes.columns[:])
     data = data.drop(label_pes, axis=1 , errors='ignore')
     
@@ -152,7 +152,7 @@ model_parcial_y.fit(X_parcial,y_parcial[:,1])
 #%% UTILIZADO COM OS DOIS TREINAMENTOS 
 # se achar todos os jogadores utilizar o model_parcial
 
-test_video = pd.read_csv("csv_files/test/ataquepato.csv")
+test_video = pd.read_csv("in/csv/test/ataquepato.csv")
 
 X,y,index = convert_to_np(test_video)
 
@@ -180,7 +180,7 @@ for i in index:
 #%% Testar com videos
 ## Aqui será treinado um frame por vez e utilizado a respota para o frame seguinte 
 
-test_video = pd.read_csv("csv_files/test/ataquepato.csv")
+test_video = pd.read_csv("in/csv/test/ataquepato.csv")
 
 X,y,index = convert_to_np(test_video)
 
@@ -189,14 +189,14 @@ pred = np.array([], dtype=np.int64).reshape(0,2)
 
 for i in index:
     _nameimg = test_video['img'][i]
-    im = io.imread('img/'+_nameimg)
+    im = io.imread('in/img/'+_nameimg)
     
     aux[0] = X[i]
     x = model_x.predict(aux)
     y = model_y.predict(aux)
     im_ball = im[int(y-150):int(y+150),int(x-200):int(x+200),:]  
     
-    io.imsave('img_recortadas/'+_nameimg, (im_ball).astype('uint8'))
+    io.imsave('processing/img_recortadas/'+_nameimg, (im_ball).astype('uint8'))
     
     #find_y, find_x = find_the_ball(_nameimg)
     find_y = -1
@@ -225,7 +225,7 @@ for index, row in test_video.iterrows():
     #plt.figure() 
     img = row[515]
     #index = row[84]
-    plt.imshow(io.imread('img/' + img))
+    plt.imshow(io.imread('in/img/' + img))
     plt.title(img)
     plt.plot(pred[index][0], pred[index][1], 'b*') 
     plt.text(pred[index][0]-5, pred[index][1]-10, ' predicted ball' )
@@ -244,7 +244,7 @@ plt.close('all')
 #%% savar in np 
 save =  np.concatenate((test, pred), axis=1)
 
-with open('np_files/result_pixel_22_08_2.npy', 'wb') as f:
+with open('processing/numpy/result_pixel_22_08_2.npy', 'wb') as f:
     np.save(f, test)
     np.save(f, pred)
 

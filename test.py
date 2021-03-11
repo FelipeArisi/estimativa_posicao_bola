@@ -26,7 +26,7 @@ import random
 from matplotlib import pyplot
 
 #data = pd.read_csv("csv_files/data_tcc_test.csv")
-data = pd.read_csv("csv_files/data_tcc_21_08.csv")
+data = pd.read_csv("in/csv/data_tcc_21_08.csv")
 _PARAMETER = 100
 
 def metrica(y_true, y_pred):
@@ -344,8 +344,8 @@ metrica(test, pred)
 #%%
 ''' salvar os frames apenas testando os resultados de um dos arquivos gerados automaticamente '''
 
-data = pd.read_csv("csv_files/test/data_tcc_meio_campo.csv")
-label_pes = pd.read_csv("csv_files/label_pes.csv")
+data = pd.read_csv("in/csv/test/data_tcc_meio_campo.csv")
+label_pes = pd.read_csv("in/csv/label_pes.csv")
 label_pes = list(label_pes.columns[:])
 
 data = data.drop(label_pes, axis=1 , errors='ignore')
@@ -370,7 +370,7 @@ for index, row in data.iterrows():
     img = row[83]
     #index = row[84]
     
-    plt.imshow(io.imread('img/' + img))
+    plt.imshow(io.imread('in/img/' + img))
     plt.title(img)
     plt.plot(y_pred[index][0], y_pred[index][1], 'b*') 
     plt.text(y_pred[index][0]-5, y_pred[index][1]-10, 'predicted ball' )
@@ -381,7 +381,7 @@ for index, row in data.iterrows():
     plt.title(img) 
     #plt.pause(0.1)
     #plt.clf()
-    save = 'videos/data_tcc_meio_campo/'+str(img)
+    save = 'out/videos/data_tcc_meio_campo/'+str(img)
     plt.savefig(save, format='png')
     
     

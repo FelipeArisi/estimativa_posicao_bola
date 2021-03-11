@@ -68,9 +68,9 @@ def print_img(ini, fim, ball_pred):
         img = row[513]
         index = row[514]
         if(index < 50 or index > 96):
-            plt.imshow(io.imread('img/' + img))
+            plt.imshow(io.imread('in/img/' + img))
         else:
-            plt.imshow(io.imread('img_1/' + img))
+            plt.imshow(io.imread('in/img_1/' + img))
         points_pato['x'] = [row[i] for i in range(0, 255, 3)] 
         points_pato['y'] = [row[i] for i in range(1, 255, 3)] 
         points_pato['score'] = [row[i] for i in range(2, 255, 3)] 
@@ -98,7 +98,7 @@ def print_img(ini, fim, ball_pred):
         save = str(img)+'.png'
         plt.savefig(save, format='png')
         
-def searchCV():
+def searchCV(X_train, y_train):
     params = {  
           'colsample_bytree':[i/10.0 for i in range(1,7)],
           'learning_rate': [i/10.0 for i in range(1,7)],
@@ -238,7 +238,7 @@ from skimage.filters.rank import median
 from skimage.morphology import disk
 
 def find_the_ball(nome):        
-    pasta = 'img_recortadas/'
+    pasta = 'processing/img_recortadas/'
     im = io.imread(pasta + nome)
     
     im2 = im.copy()
