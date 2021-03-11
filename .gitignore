@@ -1,13 +1,6 @@
-/csv_files
-/img
-/img_1
-/img_ball
-/img_recortadas
-/img_result
-/np_files
-/test
-/test_img
-/videos
-/videos_2
+*.png
 *.mp4
 *.csv
+*.txt
+*.json
+*.avi
