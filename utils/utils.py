@@ -296,3 +296,14 @@ def find_the_ball(nome):
                                         shape=image.shape)
             return center_y, center_x
     return -1,-1
+from datetime import datetime
+
+def save_np(test, pred, file=datetime.now().strftime('%d_%m_%Y_%H:%M') ):
+    name=file+'.npy'
+    path='../processing/numpy/'
+    with open(path+file, 'wb') as f:
+        np.save(f, test)
+        np.save(f, pred)
+
+    return {'name': name, 'path': path}
+    
