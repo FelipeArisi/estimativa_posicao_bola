@@ -15,7 +15,7 @@ def correcao(file, path, plot=False):
         test = np.load(f)
         pred = np.load(f)
     
-    img_path = '../in/img/00050.png'
+    img_path = 'in/img/00050.png'
     img = cv2.imread(img_path)
     h,w = img.shape[:2]
     
@@ -23,27 +23,28 @@ def correcao(file, path, plot=False):
     
     #map1, map2 = cv2.fisheye.initUndistortRectifyMap(K, D, None, K, (w,h), 5)
     #undistorted_img = cv2.remap(img, map1, map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
-    undistorted_img = cv2.fisheye.undistortImage(img, K, D, np.eye(3), newK, (DIM[0]*2,DIM[1]*2))
-    undistorted_img = cv2.resize(undistorted_img, DIM)
-    
-    velho = img.copy()[:,:,::-1] #converte BGR para RGB
-    novo = undistorted_img.copy()[:,:,::-1]
-    
-    plt.figure()
-    plt.subplot(121)
-    plt.imshow(velho)
-    pts = np.array([[ [900.0,500.0], [1100,600], [200.0, 300.0], [1800,700]]])
-    #pts = np.array([[ [531,347.0],[381,420.0], [683,381.0], [927,339.0], [880,358.0], [851,691.0], [903,476.0], [1289,511.0], [1490,689.0], [1480,403.0], [1336,423.0], [1344,329.0], [511,518.0], [536,692.0], [1086,342.0], [1176,692.0] ]])
-    #pts = np.array([test])
-    for x,y in pts[0]:
-        plt.plot(x,y,'ro')
-    
-    plt.subplot(122)
-    plt.imshow(novo)
-    aux = cv2.fisheye.undistortPoints(pts, K, D, P=newK)
-    aux = aux/2
-    print(aux)
     if(plot):
+        undistorted_img = cv2.fisheye.undistortImage(img, K, D, np.eye(3), newK, (DIM[0]*2,DIM[1]*2))
+        undistorted_img = cv2.resize(undistorted_img, DIM)
+        
+        velho = img.copy()[:,:,::-1] #converte BGR para RGB
+        novo = undistorted_img.copy()[:,:,::-1]
+        
+        plt.figure()
+        plt.subplot(121)
+        plt.imshow(velho)
+        pts = np.array([[ [900.0,500.0], [1100,600], [200.0, 300.0], [1800,700]]])
+        #pts = np.array([[ [531,347.0],[381,420.0], [683,381.0], [927,339.0], [880,358.0], [851,691.0], [903,476.0], [1289,511.0], [1490,689.0], [1480,403.0], [1336,423.0], [1344,329.0], [511,518.0], [536,692.0], [1086,342.0], [1176,692.0] ]])
+        #pts = np.array([test])
+        for x,y in pts[0]:
+            plt.plot(x,y,'ro')
+        
+        plt.subplot(122)
+        plt.imshow(novo)
+        aux = cv2.fisheye.undistortPoints(pts, K, D, P=newK)
+        aux = aux/2
+        print(aux)
+    
         for x,y in aux[0]:
             plt.plot(x,y,'ro')
 
@@ -52,10 +53,12 @@ def correcao(file, path, plot=False):
     
     
     info_file = save_np(test, pred)
-    
-    return info_file
+   
 
-'''with open('processing/np/result_pixel_correcao_22_08_2.npy', 'wb') as f:
-    np.save(f, test)
-    np.save(f, pred)'''
+    with open('processing/numpy/result_pixel_correcao_14_05.npy', 'wb') as f:
+        np.save(f, test)
+        np.save(f, pred)
+        
+     
+    return info_file
     

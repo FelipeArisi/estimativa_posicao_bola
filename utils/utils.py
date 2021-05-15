@@ -296,12 +296,73 @@ def find_the_ball(nome):
                                         shape=image.shape)
             return center_y, center_x
     return -1,-1
+
+def find_the_ball_CCOEFF_NORMED(nome):
+    import cv2
+    _MAX_STD = 5
+    _MIN_SCORE = 0.85
+    
+    pasta = 'processing/img_recortadas/'
+    im = io.imread(pasta + nome)
+    
+    
+    im1 = io.imread('processing/temp/00249.png')
+    im1 = (color.rgb2gray(im1)*255).astype('uint8')
+    
+    
+    im2 = io.imread('in/img/00380.png')
+    im2 = (color.rgb2gray(im2)*255).astype('uint8')
+    
+    im3 = io.imread('in/img/00939.png')
+    im3 = (color.rgb2gray(im3)*255).astype('uint8')
+
+    
+    template1 = im1[200:219, 205:220]
+    template2 = im2[303:314, 1115:1127]
+    template3 = im3[257:266, 515:524]
+    #template = im1[205:219, 347:359]
+    w,h = template1.shape
+    
+    Gr = (color.rgb2gray(im)*255).astype('uint8')
+           
+    res1 = cv2.matchTemplate(Gr,template1, cv2.TM_CCOEFF_NORMED)
+    min_val1, max_val1, min_loc1, max_loc1 = cv2.minMaxLoc(res1)
+    
+    res2 = cv2.matchTemplate(Gr,template2, cv2.TM_CCOEFF_NORMED)
+    min_val2, max_val2, min_loc2, max_loc2 = cv2.minMaxLoc(res2)
+    
+    res3 = cv2.matchTemplate(Gr,template3, cv2.TM_CCOEFF_NORMED)
+    min_val3, max_val3, min_loc3, max_loc3 = cv2.minMaxLoc(res3)
+
+    top_left1 = max_loc1
+    bottom_right1 = (top_left1[0] + w, top_left1[1] + h)
+    
+    top_left2 = max_loc2
+    bottom_right2 = (top_left2[0] + w, top_left2[1] + h)
+    
+    top_left3 = max_loc3
+    bottom_right3 = (top_left3[0] + w, top_left3[1] + h)
+    
+    seg = im.copy()
+    cv2.rectangle(seg,top_left1, bottom_right1, (255,0,0), 2)
+    cv2.rectangle(seg,top_left2, bottom_right2, (0,255,0), 2)
+    cv2.rectangle(seg,top_left3, bottom_right3, (0,0,255), 2)
+    
+    desvio_x = np.array([max_loc1[0], max_loc2[0], max_loc3[0]]).std()
+    desvio_y = np.array([max_loc1[1], max_loc2[1], max_loc3[1]]).std()
+    media_score = np.array([max_val1, max_val2, max_val3]).mean()
+    
+    if(desvio_x < _MAX_STD and desvio_y < _MAX_STD and media_score > _MIN_SCORE):
+        return max_loc1[1], max_loc1[0]
+    else:
+        return -1,-1
+
 from datetime import datetime
 
-def save_np(test, pred, file=datetime.now().strftime('%d_%m_%Y_%H:%M') ):
+def save_np(test, pred, file=datetime.now().strftime('%d_%m_%Y_%H_%M') ):
     name=file+'.npy'
-    path='../processing/numpy/'
-    with open(path+file, 'wb') as f:
+    path='processing/numpy/'
+    with open(path+name, 'wb') as f:
         np.save(f, test)
         np.save(f, pred)
 

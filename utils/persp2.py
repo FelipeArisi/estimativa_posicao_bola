@@ -82,11 +82,13 @@ def persp2(file, path, plot=False, option=1):
     cropped = nova[0:202,0:402]
     plt.imshow(cropped) 
     
-    '''
+    
     save =  np.concatenate((test2transf[0], predtransf[0]), axis=1)
     info_file = save_np(save, None)
-    return info_file
+    return info_file'''
     
-    '''save =  np.concatenate((test2transf[0], predtransf[0]), axis=1)
-    with open('np_files/result_metros_22_08_2.npy', 'wb') as f:
-        np.save(f, save)'''
+    save =  np.concatenate((test2transf[0], predtransf[0]), axis=1)
+    with open('processing/numpy/result_metros_14_05.npy', 'wb') as f:
+        np.save(f, save)
+    
+    return {'name': 'result_metros_14_05.npy', 'path': 'processing/numpy/'}

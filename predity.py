@@ -17,9 +17,14 @@ from scipy import stats
 import random
 from matplotlib import pyplot
 
-from utils.utils import criar_dados, print_error, metrica, shuffle, find_the_ball
+from utils.utils import criar_dados, print_error, metrica, shuffle, find_the_ball_CCOEFF_NORMED
+from utils.frame_to_video import frame_to_video 
 
+from utils.correcao import correcao
+from utils.persp2 import persp2
+from utils.erro_euclideano import erro_euclideano
 data = pd.read_csv("in/csv/data_tcc_22_08.csv")
+data_test = pd.read_csv("in/csv/data_teste.csv")
 _PARAMETER = 100
 
 
@@ -71,13 +76,15 @@ indices = np.arange(X.shape[0])
 rng = np.random.RandomState(123)
 permuted_indices = rng.permutation(indices)
 
-train_size, valid_size = int(0.95*X.shape[0]), int(0.05*X.shape[0])
+'''train_size, valid_size = int(0.95*X.shape[0]), int(0.05*X.shape[0])
 train_ind = permuted_indices[:train_size]
 valid_ind = permuted_indices[train_size:(train_size + valid_size)]
 
 X_train, y_train = X[train_ind], y[train_ind]
-X_test, y_test = X[valid_ind], y[valid_ind]
+X_test, y_test = X[valid_ind], y[valid_ind]'''
 
+X_train, y_train = X,y
+X_test, y_test, index_test = convert_to_np(data_test)
 #X_train,y_train = criar_dados(1000, X_train,y_train)
 #X_test,y_test = criar_dados(200,X_test, y_test)
 
@@ -180,13 +187,17 @@ for i in index:
 #%% Testar com videos
 ## Aqui será treinado um frame por vez e utilizado a respota para o frame seguinte 
 
-test_video = pd.read_csv("in/csv/test/ataquepato.csv")
+base_name = 'ataquepato'
+test_video = pd.read_csv("in/csv/test/"+base_name+".csv")
 
 X,y,index = convert_to_np(test_video)
 
-aux = test = np.zeros((1,82))
-pred = np.array([], dtype=np.int64).reshape(0,2)
+aux = np.zeros((1,82))
 
+pred = np.array([], dtype=np.int64).reshape(0,2)
+#test = np.array([], dtype=np.float).reshape(0,2)
+test = y
+test = test.astype(float)
 for i in index:
     _nameimg = test_video['img'][i]
     im = io.imread('in/img/'+_nameimg)
@@ -194,11 +205,17 @@ for i in index:
     aux[0] = X[i]
     x = model_x.predict(aux)
     y = model_y.predict(aux)
-    im_ball = im[int(y-150):int(y+150),int(x-200):int(x+200),:]  
+    im_ball = im
+    im_ball = im[int(y-225):int(y+225),int(x-275):int(x+275),:]  
+
+    
+    # recortar a quadra inteira
+    #im_ball = im[180:820, :]
+
     
     io.imsave('processing/img_recortadas/'+_nameimg, (im_ball).astype('uint8'))
     
-    #find_y, find_x = find_the_ball(_nameimg)
+    find_y, find_x = find_the_ball_CCOEFF_NORMED(_nameimg)
     find_y = -1
     find_x = -1
     print(find_y)
@@ -207,6 +224,8 @@ for i in index:
     else:
         _y_pred_y = y - im_ball.shape[0]/2 + find_y
         _y_pred_x = x - im_ball.shape[1]/2 + find_x
+        #_y_pred_y = find_y
+        #_y_pred_x = find_x
     
     #im_ball = im[int(_y_pred_y-150):int(_y_pred_y+150),int(_y_pred_x-200):int(_y_pred_x+200),:]    
     #io.imsave('img_recortadas/'+_nameimg, (im_ball).astype('uint8'))
@@ -232,22 +251,34 @@ for index, row in test_video.iterrows():
     plt.text(50, 50, 'Qt. Jogadores:'+ str((pd.isna(row[0:510]).value_counts()/51)[0] ), fontsize=15, color='red')
     plt.xlim(0, 1920)
     plt.ylim(1080, 0)
-    plt.show() 
+    #plt.show() 
     plt.title(img) 
     
-    plt.pause(1)
+    #plt.pause(1)
+   
+    save = 'out/videos/temp/'+str(img)
+    plt.savefig(save, format='png')   
     plt.clf()
-    save = 'videos_2/data_tcc_ataquepato/'+str(img)
-    #plt.savefig(save, format='png')   
-
 plt.close('all')
+
+#%%
+frame_to_video('out/videos/temp/', 'ataquepatofind.mp4')
+
 #%% savar in np 
 save =  np.concatenate((test, pred), axis=1)
 
-with open('processing/numpy/result_pixel_22_08_2.npy', 'wb') as f:
+with open('processing/numpy/resultado_teste_diferente.npy', 'wb') as f:
     np.save(f, test)
     np.save(f, pred)
-
-
     
+#%% 
+import cv2
+correc = correcao('resultado_teste_diferente.npy', 'processing/numpy/')
 
+#%%
+
+persp = persp2(correc['name'], correc['path'])
+
+#%%
+
+erro_euclideano(persp['name'], persp['path'])
