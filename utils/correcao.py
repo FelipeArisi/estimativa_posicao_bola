@@ -4,23 +4,41 @@ from matplotlib import pyplot as plt
 from utils.utils import save_np
 
 # Realiza a correção dos pixes devido a lente da camera
+DIM = (1920,1080)
+K=np.array([[809.155038, 0.0, 960.0], [0.0, 494.790948, 540.0], [0.0, 0.0, 1.0]])
+#D=np.array([[1.0000000000000000e+00],[-1.0927006057935250e-07],[-1.2372445556263467e-13],[0]])
+D=np.array([1.0000000000000000e-01, -1.0927006057935250e-07, -1.2372445556263467e-13, 0])
+
+
+img_path = 'in/img/00050.png'
+img = cv2.imread(img_path)
+h,w = img.shape[:2]
+
+newK = np.array([[809.155038, 0.0, DIM[0]], [0.0, 494.790948, DIM[1]], [0.0, 0.0, 1.0]])
+
+
+def correcao_img(img_path):
+    im = cv2.imread(img_path)
+    undistorted_img = cv2.fisheye.undistortImage(im, K, D, np.eye(3), newK, (DIM[0]*2,DIM[1]*2))
+    undistorted_img = cv2.resize(undistorted_img, DIM)
+    return undistorted_img.copy()[:,:,::-1]
+
+def correcao_data(data):
+    _i=0
+    _j=2
+    corr_data = data.copy()
+    while(_j <= data.shape[1]):
+        corr_data[:,_i:_j] = (cv2.fisheye.undistortPoints(np.array([ data[:,_i:_j]]), K, D, P=newK))/2
+        #corr_data = (cv2.fisheye.undistortPoints( np.array([data]), K, D, P=newK))/2
+        _i+=2
+        _j+=2
+    return corr_data
 
 def correcao(file, path, plot=False):
-    DIM = (1920,1080)
-    K=np.array([[809.155038, 0.0, 960.0], [0.0, 494.790948, 540.0], [0.0, 0.0, 1.0]])
-    #D=np.array([[1.0000000000000000e+00],[-1.0927006057935250e-07],[-1.2372445556263467e-13],[0]])
-    D=np.array([1.0000000000000000e-01, -1.0927006057935250e-07, -1.2372445556263467e-13, 0])
-    
     with open(path+file, 'rb') as f:
         test = np.load(f)
         pred = np.load(f)
-    
-    img_path = 'in/img/00050.png'
-    img = cv2.imread(img_path)
-    h,w = img.shape[:2]
-    
-    newK = np.array([[809.155038, 0.0, DIM[0]], [0.0, 494.790948, DIM[1]], [0.0, 0.0, 1.0]])
-    
+
     #map1, map2 = cv2.fisheye.initUndistortRectifyMap(K, D, None, K, (w,h), 5)
     #undistorted_img = cv2.remap(img, map1, map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
     if(plot):

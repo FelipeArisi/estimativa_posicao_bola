@@ -5,6 +5,7 @@ Created on Sat Aug 22 21:10:29 2020
 @author: felip
 """
 import numpy as np
+import pandas as pd 
 import matplotlib.pyplot as plt
 from skimage import io
 # models
@@ -15,24 +16,26 @@ import random
 from matplotlib import pyplot
 
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.metrics import mean_squared_log_error
 
 
-_PARAMETER = 100
+_PARAMETER_X = 4 # 4
+_PARAMETER_y = 2 # 2
+
 
 def metrica(y_true, y_pred):
     correct = 0
     correct_x = 0
     correct_y = 0
     for i in range(len(y_true)):
-        if(y_pred[i][0] - _PARAMETER < y_true[i][0]  < y_pred[i][0] + _PARAMETER and  y_pred[i][1] - _PARAMETER < y_true[i][1]  < y_pred[i][1] + _PARAMETER ):
+        if(y_pred[i][0] - _PARAMETER_X < y_true[i][0]  < y_pred[i][0] + _PARAMETER_X and  y_pred[i][1] - _PARAMETER_y < y_true[i][1]  < y_pred[i][1] + _PARAMETER_y ):
             correct = correct + 1
-        if(y_pred[i][0] - _PARAMETER < y_true[i][0]  < y_pred[i][0] + _PARAMETER ):
+        if(y_pred[i][0] - _PARAMETER_X < y_true[i][0]  < y_pred[i][0] + _PARAMETER_X ):
             correct_x = correct_x + 1
-        if(y_pred[i][1] - _PARAMETER < y_true[i][1]  < y_pred[i][1] + _PARAMETER ):
+        if(y_pred[i][1] - _PARAMETER_y < y_true[i][1]  < y_pred[i][1] + _PARAMETER_y ):
             correct_y = correct_y + 1
-    print('tolerance: '+str(_PARAMETER))
+    print('tolerance: ' +str(_PARAMETER_X))
     print('correct: '+str(correct*100/len(y_true)))
     print('correct_x: '+str(correct_x*100/len(y_true)))
     print('correct_y: '+str(correct_y*100/len(y_true)))
@@ -45,11 +48,11 @@ def axis(keypoints):
     return points
 
 def print_error(y_true, y_pred):
-    print('Squared: '+str(np.sqrt(mean_squared_error(y_true, y_pred))))
-    print('Squared log: '+str(mean_squared_log_error(y_true, y_pred)))
+    print('mean_absolute_error: '+str((mean_absolute_error(y_true, y_pred))))
+    print('mean_squared_error: '+str(np.sqrt(mean_squared_error(y_true, y_pred))))
+    #print('Squared log: '+str(mean_squared_log_error(y_true, y_pred)))
     #print('Median: '+str(median_absolute_error(y_true, y_pred)))
     print('-------')
-    return np.sqrt(mean_squared_error(y_true, y_pred))
 
 def print_img_train(y_pred,index_t):
     for i in range(len(index_t)):
@@ -97,6 +100,93 @@ def print_img(ini, fim, ball_pred):
         plt.title(img) 
         save = str(img)+'.png'
         plt.savefig(save, format='png')
+        
+
+      
+def plot_metros(test_video, X, y, ball_pred, save=False):
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    
+    for index, row in test_video.iterrows():
+        index = int(index)
+        points_pato = {'x': [], ' by':[], 'score':[]}
+        ball = {'x':[], 'y':[]}
+        #plt.figure() 
+        
+        rect = patches.Rectangle((-1, -1), 42, 22, linewidth=0.1,
+                             edgecolor='r', facecolor='darkgreen', zorder=0)
+
+        fig, ax = plt.subplots(1)
+        ax.add_patch(rect)
+        # Main pitch markings, ie sidelines, penalty area and halfway line
+        plt.plot([0, 0,  0, 40, 40,0,0,20,20,40], 
+                 [0, 0, 20, 20, 0,0,20,20,0,0], color='white')
+        
+        plt.plot([33.5, 34],[10, 10], color='white')
+        plt.plot([6, 6.5],[10, 10], color='white')
+        plt.plot([19.75, 20.25],[10, 10], color='white')
+        
+        centre_circle = patches.Circle([20, 10], 2.99, edgecolor='white', facecolor='darkgreen')
+        ax.add_patch(centre_circle)
+        
+        left_arc = patches.Arc([0, 10], 12.5, 15, theta1=270.0, theta2=90.0, color='white')
+        ax.add_patch(left_arc)
+        
+        right_arc = patches.Arc([40, 10], 12.5, 15, theta1=90.0, theta2=270.0, color='white')
+        ax.add_patch(right_arc)
+    
+        plt.axis('off')   
+        img = row[515]
+        plt.title(img)
+        #plt.plot(pred[index][0], pred[index][1], 'b*') 
+        #plt.text(pred[index][0]-5, pred[index][1]-10, ' predicted ball' )
+        plt.text(50, 50, 'Qt. Jogadores:'+ str((pd.isna(row[0:510]).value_counts()/51)[0] ), fontsize=15, color='red')
+        
+        points_pato['x'] = [X[index][i] for i in range(0, 80, 2)] 
+        points_pato['y'] = [X[index][i] for i in range(1, 80, 2)] 
+        
+        ball['x'] = y[index][0]
+        ball['y'] = y[index][1]
+        print(ball)
+        plt.plot(points_pato['x'], points_pato['y'], 'ro')  
+        plt.plot(ball['x'], ball['y'], 'yx') 
+        '''plt.text(ball['x'], ball['y'], 'real ball' )'''
+        
+        if(len(ball_pred)):
+            plt.plot(ball_pred[index,0], ball_pred[index,1], 'b*') 
+            '''plt.text(ball_pred[index,0], ball_pred[index:,1], 'tracked ball' )'''
+
+        plt.xlim(0, 45)
+        plt.ylim(25, 0)
+        #plt.show() 
+        plt.title(img) 
+        
+        plt.pause(1)
+        save = 'out/videos/temp/'+str(img)
+        plt.savefig(save, format='png')   
+        #plt.clf()
+    plt.close('all')
+    
+
+def convert_to_np(data):
+    label_pes = pd.read_csv("in/csv/label_pes.csv")
+    label_pes = list(label_pes.columns[:])
+    data = data.drop(label_pes, axis=1 , errors='ignore')
+    
+    # usar -4 - time com posse
+    # usar -5 - sem time com posse
+    
+    # Utilizando uma unica variavel de treinamento 
+    
+    _INDEX_V = len(data.columns) - 5
+    _INDEX_X = len(data.columns) - 4
+    _INDEX_Y = len(data.columns) - 2
+    
+    X = data.iloc[:, 0:_INDEX_V].values
+    y = data.iloc[:, _INDEX_X:_INDEX_Y].values
+    #y = y.astype(int)
+    index = data.index.values
+    return X,y,index
         
 def searchCV(X_train, y_train):
     params = {  
