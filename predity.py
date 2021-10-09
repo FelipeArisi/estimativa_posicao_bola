@@ -13,7 +13,7 @@ from skimage import io
 from sklearn.model_selection import KFold
 from xgboost import XGBRegressor
 
-
+from sklearn.impute import SimpleImputer
 
 from utils.utils import criar_dados, print_error, metrica, shuffle, find_the_ball_CCOEFF_NORMED, convert_to_np, plot_metros
 from utils.frame_to_video import frame_to_video 
@@ -21,6 +21,7 @@ from utils.frame_to_video import frame_to_video
 from utils.correcao import correcao, correcao_data, correcao_img
 from utils.persp2 import persp2, persp2_data, persp2_img
 from utils.erro_euclideano import erro_euclideano, erro_euclideano_data
+from utils.replaceNan import replaceNan
 data = pd.read_csv("in/csv/data_tcc_20_07.csv")
 data_test = pd.read_csv("in/csv/data_teste_20_07.csv")
 _PARAMETER = 2
@@ -30,34 +31,15 @@ _PARAMETER = 2
 # UTLIZADO QUANTO É APENAS UM TREINAMENTO 
    
 X,y,index = convert_to_np(data)
-model_x = XGBRegressor(objective ='reg:squarederror', colsample_bytree = 0.3, learning_rate = 0.1009,
-                max_depth = 25, alpha = 10, n_estimators = 500)
-model_y = XGBRegressor(objective ='reg:squarederror', colsample_bytree = 0.3, learning_rate = 0.1,
-               max_depth = 25, alpha = 10, n_estimators = 1000)
+model_x = XGBRegressor()
+model_y = XGBRegressor()
 
-model_x = XGBRegressor(learning_rate = 0.1)
-model_y = XGBRegressor(learning_rate = 0.1)
- 
-#from sklearn.neural_network import MLPRegressor
-#model_x =  MLPRegressor(learning_rate = 'adaptive', max_iter=5000, activation='logistic')
-#model_y =  MLPRegressor(learning_rate = 'adaptive', max_iter=5000, activation='logistic')
+imp = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
+imp.fit(X)
 
+X = imp.transform(X)
 
-#from sklearn.gaussian_process import GaussianProcessRegressor
-#from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
-#kernel = DotProduct() + WhiteKernel()
-#model_x =  GaussianProcessRegressor(kernel=kernel,random_state=0)
-#model_y =  GaussianProcessRegressor(kernel=kernel,random_state=0)
-
-
-#from sklearn.ensemble import RandomForestRegressor
-#model_x = RandomForestRegressor()
-#model_y = RandomForestRegressor()
-
-#X,y = criar_dados(100,X,y)
-X = np.load("novo_treinamento_X.npy")
-y = np.load("novo_treinamento_y.npy")
-#kf = KFold(n_splits=2)
+X,y = criar_dados(30000,X,y)
 y_pred = []
 
 _i = 0 
@@ -65,32 +47,17 @@ _i = 0
 test = np.array([], dtype=np.int64).reshape(0,2)
 pred = np.array([], dtype=np.int64).reshape(0,2)
 
-
-## USAR SEM O KFOLD
-#X = shuffle(X)
-#save_csv(X)
-indices = np.arange(X.shape[0])
-rng = np.random.RandomState(123)
-permuted_indices = rng.permutation(indices)
-
-## seperar a unica base para treino e teste
-train_size, valid_size = int(0.95*X.shape[0]), int(0.05*X.shape[0])
-train_ind = permuted_indices[:train_size]
-valid_ind = permuted_indices[train_size:(train_size + valid_size)]
-
-X_train, y_train = X[train_ind], y[train_ind]
-X_test, y_test = X[valid_ind], y[valid_ind]
-
-'''
 ## utilizar um outro arquivo para o teste
 X_train, y_train = X,y
 X_test, y_test, index_test = convert_to_np(data_test)
+imp.fit(X_test)
+X_test = imp.transform(X_test)
 #X_train,y_train = criar_dados(1000, X_train,y_train)
 #X_test,y_test = criar_dados(200,X_test, y_test)
 
-### Converter Para metros 
-X_train, y_train = persp2_data( correcao_data(X_train) ), persp2_data (correcao_data(y_train)) 
-X_test, y_test = persp2_data (correcao_data(X_test) ), persp2_data( correcao_data(y_test))'''
+
+X_train, y_train = persp2_data (correcao_data(X_train) ), persp2_data (correcao_data(y_train)) 
+X_test, y_test  =   persp2_data (correcao_data(X_test) ), persp2_data( correcao_data(y_test))
 
 #X_train, y_train =  correcao_data(X_train) , correcao_data(y_train)
 #X_test, y_test = correcao_data(X_test) , correcao_data(y_test)
@@ -106,32 +73,21 @@ y_pred = y_pred.T
 
 test = np.vstack((test,y_test))
 pred = np.vstack((pred,y_pred))
-###
-'''
-# cross validation
 
-for index_train, index_test in kf.split(X):
-    X_train, X_test, y_train, y_test = X[index_train], X[index_test], y[index_train], y[index_test]
-
-    model_x.fit(X_train,y_train[:,0])
-    _y_pred_x = model_x.predict(X_test)
-    
-    model_y.fit(X_train, y_train[:,1])
-    _y_pred_y = model_y.predict(X_test)
-    
-    y_pred = np.vstack((_y_pred_x, _y_pred_y))
-    y_pred = y_pred.T
-  
-    
-    test = np.vstack((test,y_test))
-    pred = np.vstack((pred,y_pred))
-
-#plot_ball(test, pred)
-#print_importances(importances_x, importances_y)
-'''
 print_error(test, pred)
 metrica(test, pred)
+#%%
 
+_resultTrain_x = model_x.predict(X_train)
+_resultTrain_y = model_y.predict(X_train)
+resultTrain = np.vstack((_resultTrain_x, _resultTrain_y))
+resultTrain = resultTrain.T
+
+matriz = np.concatenate((resultTrain, y_train), axis=1)
+matriz2 = np.concatenate((pred, test), axis=1)
+
+
+erro_euclideano_data(matriz, matriz2)
 
 #%% Testar com videos -- Correção
 ## Aqui será treinado um frame por vez e utilizado a respota para o frame seguinte 

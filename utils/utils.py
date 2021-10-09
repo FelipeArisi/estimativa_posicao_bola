@@ -172,7 +172,7 @@ def convert_to_np(data):
     label_pes = pd.read_csv("in/csv/label_pes.csv")
     label_pes = list(label_pes.columns[:])
     data = data.drop(label_pes, axis=1 , errors='ignore')
-    
+    data = data.drop({'x_before', 'y_before'}, axis=1 , errors='ignore')
     # usar -4 - time com posse
     # usar -5 - sem time com posse
     
@@ -247,7 +247,8 @@ def criar_dados(n_dados, X, y):
         X = np.vstack((X,shuffle(X[index:index+1,:]))) # troca a posição e salva
         y = np.vstack((y,y[index])) # salva a posição da bola naquele frame
         i=i+1
-    return X,y
+    print(len(X))
+    return X * np.random.uniform(low=0.99, high=1.1, size=(1,len(X))).T, y
 
 def save_csv(data, folder):
     # save numpy array as csv file
