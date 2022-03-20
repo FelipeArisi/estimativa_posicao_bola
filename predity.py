@@ -25,19 +25,21 @@ from utils.replaceNan import replaceNan
 data = pd.read_csv("in/csv/data_tcc_20_07.csv")
 data_test = pd.read_csv("in/csv/data_teste_20_07.csv")
 _PARAMETER = 2
+from numba import cuda
 
 
 #%% 
 # UTLIZADO QUANTO É APENAS UM TREINAMENTO 
-   
+
+data = pd.read_csv("in/csv/data_tcc_20_07.csv")
+parametros = {'colsample_bytree': 0.8, 'max_depth': 15, 'n_estimators': 1000, 'reg_alpha': 1.3, 'reg_lambda': 1.3, 'subsample': 0.9}
 X,y,index = convert_to_np(data)
 model_x = XGBRegressor()
 model_y = XGBRegressor()
 
-imp = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
-imp.fit(X)
-
-X = imp.transform(X)
+#imp = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
+#imp.fit(X)
+#X = imp.transform(X)
 
 X,y = criar_dados(30000,X,y)
 y_pred = []
@@ -50,8 +52,8 @@ pred = np.array([], dtype=np.int64).reshape(0,2)
 ## utilizar um outro arquivo para o teste
 X_train, y_train = X,y
 X_test, y_test, index_test = convert_to_np(data_test)
-imp.fit(X_test)
-X_test = imp.transform(X_test)
+#imp.fit(X_test)
+#X_test = imp.transform(X_test)
 #X_train,y_train = criar_dados(1000, X_train,y_train)
 #X_test,y_test = criar_dados(200,X_test, y_test)
 
@@ -76,18 +78,132 @@ pred = np.vstack((pred,y_pred))
 
 print_error(test, pred)
 metrica(test, pred)
+
+#%% MultiOutputRegressor
+
+from sklearn.multioutput import MultiOutputRegressor
+model = XGBRegressor()
+
+multioutputregressor = MultiOutputRegressor(model).fit(X, y)
+multioutputregressor.predict(X)
+print (np.mean((multioutputregressor.predict(X) - y)**2, axis=0))
+#%%
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.multioutput import MultiOutputRegressor
+
+X,y,index = convert_to_np(data)
+X,y = criar_dados(30000,X,y)
+
+#imp = SimpleImputer(missing_values=np.nan, strategy='mean')
+#imp.fit(X)
+#X = imp.transform(X)
+
+X, y = persp2_data( correcao_data( X)), persp2_data( correcao_data(y))
+
+
+def algorithm_pipeline(X_train_data, y_train_data, 
+                       model, param_grid, cv=10, scoring_fit='neg_mean_squared_error',
+                       do_probabilities = False):
+    print('Entrou')
+    
+
+    return fitted_model
+
+
+model = XGBRegressor()
+param_grid = {
+    'estimator__n_estimators': [400, 600, 800],
+    'estimator__colsample_bytree': [0.7, 0.6, 0.8],
+    'estimator__max_depth': [15,20,25],
+    'estimator__reg_alpha': [1.1,1.2, 1.3],
+    'estimator__reg_lambda': [1.1, 1.3],
+    'estimator__subsample': [0.7,0.8, 0.9],
+    'estimator__min_child_weight': [1, 5, 10],
+    'estimator__learning_rate': [0.01, 0.02, 0.05]  
+    
+}
+
+gs = RandomizedSearchCV(
+        estimator = MultiOutputRegressor(model),
+        param_distributions =param_grid, 
+        cv=5, 
+        n_jobs=-1, 
+        scoring='neg_mean_squared_error',
+        verbose=3,
+        n_iter=10,
+        return_train_score=True
+    )
+fitted_model = gs.fit(X, y)
+    
+
+
+# Root Mean Squared Error
+print(np.sqrt(-fitted_model.best_score_))
+print(fitted_model.best_params_)
+
+
 #%%
 
-_resultTrain_x = model_x.predict(X_train)
-_resultTrain_y = model_y.predict(X_train)
-resultTrain = np.vstack((_resultTrain_x, _resultTrain_y))
-resultTrain = resultTrain.T
+resultTrain = fitted_model.predict(X)
 
-matriz = np.concatenate((resultTrain, y_train), axis=1)
-matriz2 = np.concatenate((pred, test), axis=1)
+
+matriz = np.concatenate((resultTrain, y), axis=1)
+
+resultTrain = fitted_model.predict(X_test)
+matriz2 = np.concatenate((resultTrain, y_test), axis=1)
 
 
 erro_euclideano_data(matriz, matriz2)
+
+#%% Print error Grid
+model_x =  MultiOutputRegressor(XGBRegressor())
+model_x.fit(X, y)
+
+#%%
+print("Print erro treino")
+y_treino = model_x.predict(X)
+y_search = fitted_model.predict(X)
+
+print_error(y, y_treino)
+print("-grid")
+print_error(y, y_search)
+
+print("Print Teste")
+y_treino = model_x.predict(X_test)
+y_search = fitted_model.predict(X_test)
+
+
+print_error(y_test, y_treino)
+print("-grid")
+print_error(y_test, y_search)
+
+
+
+#%% Mapa de calor
+
+import numpy as np
+import numpy.random
+import matplotlib.pyplot as plt
+X,y,index = convert_to_np(data)
+
+fig, axs = plt.subplots(2)
+plt.subplot(1, 3, 1)
+plt.hist2d(y[:,0],y[:,1],bins=25)
+
+y=  correcao_data(y)
+plt.subplot(1, 3, 2)
+plt.hist2d(y[:,0],y[:,1],bins=25)
+
+
+plt.show()
+
+y= persp2_data(y)
+plt.subplot(1, 3, 3)
+plt.hist2d(y[:,0],y[:,1],bins=25)
+
+
+plt.show()
+
 
 #%% Testar com videos -- Correção
 ## Aqui será treinado um frame por vez e utilizado a respota para o frame seguinte 
@@ -140,10 +256,6 @@ for i in index:
     #im_ball = im[int(_y_pred_y-150):int(_y_pred_y+150),int(_y_pred_x-200):int(_y_pred_x+200),:]    
     #io.imsave('img_recortadas/'+_nameimg, (im_ball).astype('uint8'))
     
-    
-    if((i+1) != len(index)):
-        X[i+1,80] = _y_pred_x
-        X[i+1,81] = _y_pred_y
     y_pred = np.vstack((_y_pred_x, _y_pred_y))
     y_pred = y_pred.T
     pred = np.vstack((pred,y_pred))

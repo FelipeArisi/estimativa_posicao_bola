@@ -23,15 +23,15 @@ def correcao_img(img_path):
     undistorted_img = cv2.resize(undistorted_img, DIM)
     return undistorted_img.copy()[:,:,::-1]
 
-def correcao_data(data):
+def correcao_data(data, score=0):
     _i=0
     _j=2
     corr_data = data.copy()
     while(_j <= data.shape[1]):
         corr_data[:,_i:_j] = (cv2.fisheye.undistortPoints(np.array([ data[:,_i:_j]]), K, D, P=newK))/2
         #corr_data = (cv2.fisheye.undistortPoints( np.array([data]), K, D, P=newK))/2
-        _i+=2
-        _j+=2
+        _i+=2 + score
+        _j+=2 + score
     return corr_data
 
 def correcao(file, path, plot=False):

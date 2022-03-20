@@ -34,7 +34,7 @@ def persp2_img(img_path):
     return test2transf[0]
 
 
-def persp2_data(data, option = 1, img = None):
+def persp2_data(data, option = 1, img = None, score = 0):
     if(option == 1):
         M = cv2.findHomography(pt1,pt2)
     else:
@@ -74,8 +74,8 @@ def persp2_data(data, option = 1, img = None):
 
             ax1.plot(data[:,_i:_j][0][0], data[:,_i:_j][0][1],'o', color=color)
             ax2.plot(persp[:,_i:_j][0][0], persp[:,_i:_j][0][1],'o', color=color)
-        _i+=2
-        _j+=2
+        _i+=2 + score
+        _j+=2 + score
         
     retorno = persp.clip(0)
     retorno[lin,col] = np.nan

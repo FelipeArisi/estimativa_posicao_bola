@@ -62,33 +62,33 @@ def print_img_train(y_pred,index_t):
         print_img( int(index_t[i]), int(index_t[i]) + 1, ball_pred  )
     
 
-def print_img(ini, fim, ball_pred):
+def print_img(data, ini, fim, ball_pred):
     for index, row in sorted(data.iterrows())[ini:fim]:
         plt.figure()
         points_pato = {'x': [], ' by':[], 'score':[]}
         points_visitante = {'x': [], 'y':[], 'score':[]}
         ball = {'x':[], 'y':[]}
-        img = row[513]
-        index = row[514]
-        if(index < 50 or index > 96):
+        img = row[512]
+        img_type = row[513]
+        if(img_type == 0):
             plt.imshow(io.imread('in/img/' + img))
         else:
             plt.imshow(io.imread('in/img_1/' + img))
-        points_pato['x'] = [row[i] for i in range(0, 255, 3)] 
-        points_pato['y'] = [row[i] for i in range(1, 255, 3)] 
-        points_pato['score'] = [row[i] for i in range(2, 255, 3)] 
+        #points_pato['x'] = [row[i] for i in range(0, 255, 3)] 
+        #points_pato['y'] = [row[i] for i in range(1, 255, 3)] 
+        #points_pato['score'] = [row[i] for i in range(2, 255, 3)] 
         
-        points_visitante['x'] = [row[i] for i in range(255, 510, 3)] 
-        points_visitante['y'] = [row[i] for i in range(256, 510, 3)] 
-        points_visitante['score'] = [row[i] for i in range(257, 510, 3)] 
+        points_visitante['x'] = [row[i] for i in range(0, 510, 3)] 
+        points_visitante['y'] = [row[i] for i in range(1, 510, 3)] 
+        points_visitante['score'] = [row[i] for i in range(2, 510, 3)] 
         
-        ball['x'] = row[511]
-        ball['y'] = row[512]
+        #ball['x'] = row[510]
+        #ball['y'] = row[511]
         
-        plt.plot(points_pato['x'], points_pato['y'], 'ro') 
+        #plt.plot(points_pato['x'], points_pato['y'], 'ro') 
         plt.plot(points_visitante['x'], points_visitante['y'], 'go') 
-        plt.plot(ball['x'], ball['y'], 'yx') 
-        plt.text(ball['x']-5, ball['y']-10, 'real ball' )
+        #plt.plot(ball['x'], ball['y'], 'yx') 
+        #plt.text(ball['x']-5, ball['y']-10, 'real ball' )
         
         if(len(ball_pred)):
             plt.plot(ball_pred['x'], ball_pred['y'], 'b*') 
@@ -111,7 +111,7 @@ def plot_metros(test_video, X, y, ball_pred, save=False):
         index = int(index)
         points_pato = {'x': [], ' by':[], 'score':[]}
         ball = {'x':[], 'y':[]}
-        #plt.figure() 
+        plt.figure() 
         
         rect = patches.Rectangle((-1, -1), 42, 22, linewidth=0.1,
                              edgecolor='r', facecolor='darkgreen', zorder=0)
@@ -136,14 +136,14 @@ def plot_metros(test_video, X, y, ball_pred, save=False):
         ax.add_patch(right_arc)
     
         plt.axis('off')   
-        img = row[515]
+        img = row[512]
         plt.title(img)
         #plt.plot(pred[index][0], pred[index][1], 'b*') 
         #plt.text(pred[index][0]-5, pred[index][1]-10, ' predicted ball' )
         plt.text(50, 50, 'Qt. Jogadores:'+ str((pd.isna(row[0:510]).value_counts()/51)[0] ), fontsize=15, color='red')
         
-        points_pato['x'] = [X[index][i] for i in range(0, 80, 2)] 
-        points_pato['y'] = [X[index][i] for i in range(1, 80, 2)] 
+        points_pato['x'] = [X[index][i] for i in range(0, 510, 3)] 
+        points_pato['y'] = [X[index][i] for i in range(1, 510, 3)] 
         
         ball['x'] = y[index][0]
         ball['y'] = y[index][1]
@@ -158,18 +158,18 @@ def plot_metros(test_video, X, y, ball_pred, save=False):
 
         plt.xlim(0, 45)
         plt.ylim(25, 0)
-        #plt.show() 
+        plt.show() 
         plt.title(img) 
         
         plt.pause(1)
-        save = 'out/videos/temp/'+str(img)
+        save = 'out/videos/temp1/'+str(img)
         plt.savefig(save, format='png')   
-        #plt.clf()
+        plt.clf()
     plt.close('all')
     
 
-def convert_to_np(data):
-    label_pes = pd.read_csv("in/csv/label_pes.csv")
+def convert_to_np(data, label):
+    label_pes = pd.read_csv("in/csv/"+label)
     label_pes = list(label_pes.columns[:])
     data = data.drop(label_pes, axis=1 , errors='ignore')
     data = data.drop({'x_before', 'y_before'}, axis=1 , errors='ignore')
@@ -178,7 +178,7 @@ def convert_to_np(data):
     
     # Utilizando uma unica variavel de treinamento 
     
-    _INDEX_V = len(data.columns) - 5
+    _INDEX_V = len(data.columns) - 4
     _INDEX_X = len(data.columns) - 4
     _INDEX_Y = len(data.columns) - 2
     
@@ -187,7 +187,25 @@ def convert_to_np(data):
     #y = y.astype(int)
     index = data.index.values
     return X,y,index
-        
+
+
+def fit(model, X_train, y_train, X_test, y_test):
+    model = model.fit(X_train, y_train)
+    print(' ------- XGBOOST')
+    print('Train')
+    result = model.predict(X_train)
+    print('mean_absolute_error: '+str((mean_absolute_error(y_train, result))))
+    print('mean_squared_error: '+str(np.sqrt(mean_squared_error(y_train, result))))
+    
+    print('Test')
+    result = model.predict(X_test)
+    print('mean_absolute_error: '+str((mean_absolute_error(y_test, result))))
+    print('mean_squared_error: '+str(np.sqrt(mean_squared_error(y_test, result))))
+    
+    print(str(y_test[0]) + '---' + str(result[0]))
+    
+    
+
 def searchCV(X_train, y_train):
     params = {  
           'colsample_bytree':[i/10.0 for i in range(1,7)],
@@ -226,16 +244,15 @@ def return_importances(model, plt):
         pyplot.show()
     return importance
 
-def shuffle(X):
-    posicoes = np.arange(0,10)
+def shuffle(X, players=10):
+    lang = int(X.shape[1] / players)
+    posicoes = np.arange(0,players)
     random.shuffle(posicoes) #embaralha posicoes
     novo = np.zeros(X.shape)
-    if(X.shape[1] == 82): #CUIDA QUANDO USA A BOLA ANTERIOR OU NÃO
-        novo[:,80:82] = X[:,80:82].copy()
     for n, pos in enumerate(posicoes):
-        pos_velha = n*8
-        pos_nova = pos*8
-        novo[:,pos_nova:pos_nova+8] = X[:,pos_velha:pos_velha+8].copy()
+        pos_velha = n*lang
+        pos_nova = pos*lang
+        novo[:,pos_nova:pos_nova+lang] = X[:,pos_velha:pos_velha+lang].copy()
         
     return novo
 
@@ -247,8 +264,7 @@ def criar_dados(n_dados, X, y):
         X = np.vstack((X,shuffle(X[index:index+1,:]))) # troca a posição e salva
         y = np.vstack((y,y[index])) # salva a posição da bola naquele frame
         i=i+1
-    print(len(X))
-    return X * np.random.uniform(low=0.99, high=1.1, size=(1,len(X))).T, y
+    return X * np.random.uniform(low=0.99, high=1.1, size=(1,len(X))).T, y* np.random.uniform(low=0.99, high=1.1, size=(1,len(y))).T
 
 def save_csv(data, folder):
     # save numpy array as csv file
